@@ -1,31 +1,23 @@
 import { useState, useRef, useEffect } from 'react';
 
-export const highlightColors = [
-    '#fd1d7eff', // Neon pink
-    '#39FF14', // Neon green-yellow
-    '#FF9933', // Neon coral
-    '#00FFCC', // Neon turquoise
-    '#FF3366', // Neon rose
-    '#CC00FF', // Neon purple
-
-];
 
 export interface MainGameButtonProps {
-    diameter: number
+    diameter: number,
+    color: string,
     recordPress: () => void
+    samplePath: string
+    style?: React.CSSProperties
 }
 
-export let samples = ["./808.mp3", "./hihat.mp3", "./909.mp3"]
 
 export const MainGameButton: React.FC<MainGameButtonProps> = (props: MainGameButtonProps) => {
     const [isPressed, setIsPressed] = useState(false);
-    const [color] = useState(highlightColors[Math.floor(Math.random() * highlightColors.length)]);
+    const [color] = useState(props.color);
     const audioRef = useRef<HTMLAudioElement | null>(null);
-    const [audioPath] = useState(samples[Math.floor(Math.random() * samples.length)]);
 
     // Initialize audio only once
     useEffect(() => {
-        audioRef.current = new Audio(audioPath);
+        audioRef.current = new Audio(props.samplePath);
         return () => {
             if (audioRef.current) {
                 audioRef.current.pause();
@@ -50,20 +42,27 @@ export const MainGameButton: React.FC<MainGameButtonProps> = (props: MainGameBut
     };
 
     return <div
-        style={{
-            height: `${props.diameter}vw`,
-            width: `${props.diameter}vw`,
-            backgroundColor: color,
-            borderRadius: "50%",
-            filter: `${isPressed ? 'brightness(0.4)' : 'brightness(1)'}`,
-            transition: 'all 0.1s ease',
-            boxShadow: `0 0 ${isPressed ? '10px' : '20px'} ${color}`,
-            cursor: 'pointer',
-            border: 'none',
-            outline: 'none'
-        }}
+
+        style={
+            (() => {
+                const baseStyle: React.CSSProperties = {
+                    height: `${props.diameter}vw`,
+                    width: `${props.diameter}vw`,
+                    backgroundColor: color,
+                    borderRadius: "50%",
+                    filter: `${isPressed ? 'brightness(0.4)' : 'brightness(1)'}`,
+                    transition: 'all 0.1s ease',
+                    boxShadow: `0 0 ${isPressed ? '10px' : '20px'} ${color}`,
+                    cursor: 'pointer',
+                    border: 'none',
+                    outline: 'none',
+                    margin: 'auto'
+                };
+                return { ...baseStyle, ...(props.style || {}) } as React.CSSProperties;
+            })()}
+
         onMouseDown={start}
-        onMouseUp={() => setIsPressed(false)}
-        onMouseLeave={() => setIsPressed(false)}
+        onMouseUp={end}
+        onMouseLeave={end}
     > </div>;
 };

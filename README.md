@@ -1,14 +1,11 @@
-# Shoroom game
+# Launchpad game
 
-# Investigation
--> Jump king ass game - phisics engine, level scroll and level display -> frame by frame display
--> simon says game, just like ania had
--> tanks 
--> Logic game that has randomly generated solutions
--> a game that uses phone gyro just like idce tower
+3 modes of operation:
+1. precision battle - player tries to play provided sample
+2. Player - simply plays out sample
+3. Recorder / free play records user inputs
 
+# Backlog
+1. It would be nice to have sound library 
+2. Clock displaye math is Fucked  
 
-# Goals 
-- simple to make 
-- has leaderboard
-- 

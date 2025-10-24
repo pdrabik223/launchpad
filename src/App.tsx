@@ -1,185 +1,148 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, type JSX } from 'react';
 import './App.css'
-import { Column } from './coulmn';
-import { Row } from './row';
-import { MainGameButton } from './MainGameButton';
 import { v4 as uuidv4 } from 'uuid';
+import { FullScreenOverlay } from './FullScreenOverlay';
+import { Peg } from './Peg';
+import { ButtonsOverlay } from './ButtonsOverlay';
+import { TwoStateButton } from './TwoStateButton';
+import { Playback } from './Playback';
+import { TimerDisplay } from './TimerDisplay';
+import { Column } from './coulmn';
+
+export const buttonColors = [
+  "#e63946",
+  "#f77f00",
+  "#ffd166",
+  "#8ac926",
+  "#2a9d8f",
+  "#00b4d8",
+  "#48cae4",
+  "#4361ee",
+  "#3a0ca3",
+  "#8338ec",
+  "#ff006e",
+  "#fb6f92",
+  "#ff595e",
+  "#ffb5a7",
+  "#9ef01a",
+  "#00f5d4"
+];
+
+export const buttonSamples = [
+  "./808.mp3",
+  "./hihat.mp3",
+  "./909.mp3",
+  "./808.mp3",
+  "./hihat.mp3",
+  "./909.mp3",
+  "./808.mp3",
+  "./hihat.mp3",
+  "./909.mp3",
+  "./808.mp3",
+  "./hihat.mp3",
+  "./909.mp3",
+  "./808.mp3",
+  "./hihat.mp3",
+  "./909.mp3",
+  "./909.mp3",
+];
+
 
 
 const INTERVAL_IN_MILISECONDS = 10;
 
 function App() {
   // Create 16 buttons in a circle
-  const buttonSize = 12; // Size in vw units
 
   const [time, setTime] = useState(0);
   const [referenceTime, setReferenceTime] = useState(Date.now());
+  const [isClockRunning, setIsClockRunning] = useState(false);
+
   const [recording] = useState<[number, number][]>(new Array<[number, number]>())
-  const [pegDisplayIndexes, setPegDisplayIndexes] = useState<[number, number]>([0, 0])
-  const [displayedPegs, setDisplayedPegs] = useState<[number, number][]>(new Array<[number, number]>())
+  const [animatedPegs, setAnimatedPegs] = useState<Array<{ id: string, color: string }>>([])
+
 
   useEffect(() => {
-    const countDownUntilZero = () => {
+    if (!isClockRunning) return;
+
+    const cuntUp = () => {
       setTime(prevTime => {
         const now = Date.now();
         const interval = now - referenceTime;
         setReferenceTime(now);
         let tempTime = prevTime + interval;
-        calculatePegPositions(prevTime, interval)
         return tempTime
       });
     }
 
-    setTimeout(countDownUntilZero, INTERVAL_IN_MILISECONDS);
-  }, [time]);
+    const timerId = setTimeout(cuntUp, INTERVAL_IN_MILISECONDS);
+    return () => clearTimeout(timerId);
 
-  function appendToRecording(id: number) {
-    // if (recording.get(time + 100) === undefined) recording.set(time + 100, [id])
-    recording.push([time, id])
+  }, [time, isClockRunning, referenceTime]);
+
+  function appendToRecording(buttonID: number) {
+    if (!isClockRunning) return
+    recording.push([time, buttonID])
+    const id = uuidv4();
+    let color = buttonColors[buttonID];
+    setAnimatedPegs(prev => [...prev, { id, color }]);
   }
 
-  function calculatePegPositions(prevTime: number, interval: number) {
-    // yellow peg describes current time and it's width is 0.5 %, whole timeline is 80% of viewport let's say 8s 
-    // so peg takes 4 seconds to move from the edge to center
-    if (recording.length == 0 || pegDisplayIndexes[0] > recording.length) {
-      return
-    }
 
-    // recalculate PegIndexes 
-    let newStartIndex = 0;
-    let newEndIndex = recording.length;
+  return <div>
+    <FullScreenOverlay show={!isClockRunning && recording.length != 0} >
+      <RecordingSummary recordingTimeEnd={time} recording={recording} />
+    </FullScreenOverlay>
 
-    for (let i = pegDisplayIndexes[0]; i < recording.length; i++) {
-      if (recording[i][0] < (time - 4000)) { newStartIndex = i + 1; continue }
-      if (recording[i][0] > (time + 4000)) { newEndIndex = i; break }
-    }
+    <Column style={{ position: "absolute", top: "50%", left: "50%" }}>
+      <TimerDisplay currentTime={time} />
 
-    displayedPegs.splice(0, newStartIndex - pegDisplayIndexes[0])
+      <button
 
-    for (let i = newStartIndex; i < newEndIndex; i++) {
-      displayedPegs.push(recording[i])
-    }
-  }
+        onClick={() => {
+          setReferenceTime(Date.now()),
+            setTime(0);
+        }
+        }>Reset time</button>
 
-  function getPegs() {
+      <TwoStateButton
+        onToggle={(recording) => {
+          setIsClockRunning(recording);
+          if (recording) {
+            setTime(0);
+            setReferenceTime(Date.now());
+          }
+        }}
+      />
+    </Column>
 
-    let positions = []
-    for (let peg of displayedPegs) {
-      let position = (((time - peg[0]) / 4000) * 100)
-      positions.push(<Peg color='red' offsetTop={position} />)
+    <Playback animatedPegs={
+      animatedPegs.map(p => (
+        <Peg key={p.id} color={p.color} runAnimation={true} removeSelf={() => {
+          // remove peg from state when animation ends
+          setAnimatedPegs(prev => prev.filter(x => x.id !== p.id))
+        }} />
+      ))
+    } />
 
-    }
+    <ButtonsOverlay appendToRecording={appendToRecording} />
+  </div>
 
-    return positions
-
-  }
-
-  return (
-
-    <div style={{
-    }}>
-      {time}
-      <button onClick={() => {
-        setReferenceTime(Date.now()),
-          setTime(0);
-      }
-      }>Reset time</button>
-
-      <div style={{ width: '4%', backgroundColor: 'gray', height: '80%', top: '10%', position: "absolute", left: '5%' }}>
-        {getPegs()}
-
-        <Peg color='orange' offsetTop={49.75} />
-
-      </div>
-
-      <Column>
-        <Row>
-          <MainGameButton
-            recordPress={() => appendToRecording(0)}
-            diameter={buttonSize}
-          />
-          <MainGameButton
-            recordPress={() => appendToRecording(1)}
-            diameter={buttonSize}
-          />
-          <MainGameButton
-            recordPress={() => appendToRecording(2)}
-            diameter={buttonSize}
-          />
-          <MainGameButton
-            recordPress={() => appendToRecording(3)}
-            diameter={buttonSize}
-          />
-        </Row>
-        <Row>
-          <MainGameButton
-            recordPress={() => appendToRecording(4)}
-            diameter={buttonSize}
-          />
-          <MainGameButton
-            recordPress={() => appendToRecording(5)}
-            diameter={buttonSize}
-          />
-          <MainGameButton
-            recordPress={() => appendToRecording(6)}
-            diameter={buttonSize}
-          />
-          <MainGameButton
-            recordPress={() => appendToRecording(7)}
-            diameter={buttonSize}
-          />
-        </Row>
-        <Row>
-          <MainGameButton
-            recordPress={() => appendToRecording(8)}
-            diameter={buttonSize}
-          />
-          <MainGameButton
-            recordPress={() => appendToRecording(9)}
-            diameter={buttonSize}
-          />
-          <MainGameButton
-            recordPress={() => appendToRecording(10)}
-            diameter={buttonSize}
-          />
-          <MainGameButton
-            recordPress={() => appendToRecording(11)}
-            diameter={buttonSize}
-          />
-        </Row>
-        <Row>
-          <MainGameButton
-            recordPress={() => appendToRecording(12)}
-            diameter={buttonSize}
-          />
-          <MainGameButton
-            recordPress={() => appendToRecording(13)}
-            diameter={buttonSize}
-          />
-          <MainGameButton
-            recordPress={() => appendToRecording(14)}
-            diameter={buttonSize}
-          />
-          <MainGameButton
-            recordPress={() => appendToRecording(15)}
-            diameter={buttonSize}
-          />
-        </Row>
-      </Column>
-    </div>
-  )
 }
 
 export default App
 
 
-
-export interface PegProps {
-  color: string
-  offsetTop: number
+export interface RecordingSummaryProps {
+  recordingTimeEnd: number,
+  recording: [number, number][]
 }
 
-export const Peg: React.FC<PegProps> = (props: PegProps) => {
-  return <div key={uuidv4()} style={{ width: '100%', backgroundColor: props.color, height: '0.5%', position: "absolute", top: `${props.offsetTop}%`, margin: 'auto' }}>
+export const RecordingSummary: React.FC<RecordingSummaryProps> = (props: RecordingSummaryProps) => {
+  return <div style={{ transform: 'rotate(90deg)' }}>
+    Duration: <TimerDisplay currentTime={props.recordingTimeEnd} />
   </div>
 }
+
+
+
