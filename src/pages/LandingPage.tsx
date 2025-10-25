@@ -5,7 +5,13 @@ export const LandingPage: React.FC<{}> = () => {
     let navigate = useNavigate();
 
     return <Column>
-        <button onClick={() => navigate("/recording")} > Go to recording Page</button>
+        <button onClick={() => navigate("/recording")} > Go to Recording Page</button>
+        <button onClick={() => navigate("/replay")} > Go to Replay Page</button>
+
     </Column >
 
 }
+
+
+
+

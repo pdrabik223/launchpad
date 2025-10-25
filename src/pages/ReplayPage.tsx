@@ -1,30 +1,28 @@
 import { useState, useEffect } from 'react';
 
 import { v4 as uuidv4 } from 'uuid';
-import { FullScreenOverlay } from '../components/FullScreenOverlay';
-import { RecordingSummary } from '../components/RecordingSummary';
-import { Column } from '../components/coulmn';
 import { TimerDisplay } from '../components/TimerDisplay';
 import { buttonColors, INTERVAL_IN_MILISECONDS } from '../globalConstants';
-import { TwoStateButton } from '../components/TwoStateButton';
 import { Playback } from '../components/Playback';
 import { Peg } from '../components/Peg';
 import { ButtonsOverlay } from '../components/ButtonsOverlay';
 import { useNavigate } from 'react-router-dom';
+import { Column } from '../components/coulmn';
 
 
 
-export const RecordingPage: React.FC<{}> = () => {
+
+
+export const ReplayPage: React.FC<{}> = () => {
 
     const [time, setTime] = useState(0);
     const [referenceTime, setReferenceTime] = useState(Date.now());
     const [isClockRunning, setIsClockRunning] = useState(false);
-
     const [recording] = useState<[number, number][]>(new Array<[number, number]>())
+
     const [animatedPegs, setAnimatedPegs] = useState<Array<{ id: string, color: string }>>([])
 
     let navigate = useNavigate();
-
 
     useEffect(() => {
         if (!isClockRunning) return;
@@ -39,24 +37,30 @@ export const RecordingPage: React.FC<{}> = () => {
             });
         }
 
+
+
         const timerId = setTimeout(cuntUp, INTERVAL_IN_MILISECONDS);
         return () => clearTimeout(timerId);
 
     }, [time, isClockRunning, referenceTime]);
 
-    function appendToRecording(buttonID: number) {
-        if (!isClockRunning) return
-        recording.push([time, buttonID])
+    function appendToAnimation(buttonID: number) {
         const id = uuidv4();
         let color = buttonColors[buttonID];
         setAnimatedPegs(prev => [...prev, { id, color }]);
     }
 
+    // function appendToRecording(buttonID: number) {
+    //     if (!isClockRunning) return
+    //     recording.push([time, buttonID])
+    //     const id = uuidv4();
+    //     let color = buttonColors[buttonID];
+    //     setAnimatedPegs(prev => [...prev, { id, color }]);
+    // }
+
 
     return <div>
-        <FullScreenOverlay show={!isClockRunning && recording.length != 0} opacity={0.9}>
-            <RecordingSummary recordingTimeEnd={time} recording={recording} />
-        </FullScreenOverlay>
+
 
         <Column style={{ position: "absolute", top: "48%", left: "45%", transform: 'rotate(90deg)' }}>
             <TimerDisplay currentTime={time} />
@@ -67,19 +71,18 @@ export const RecordingPage: React.FC<{}> = () => {
                     setReferenceTime(Date.now()),
                         setTime(0);
                 }
-                }>Reset time</button>
+                }>Reset recording</button>
 
-            <TwoStateButton
-                onToggle={(recording) => {
-                    setIsClockRunning(recording);
-                    if (recording) {
-                        setTime(0);
-                        setReferenceTime(Date.now());
-                    }
-                }}
-            />
             <button style={{ margin: '12px' }} onClick={() => navigate("/")}>Exit</button>
-
+            <input
+                style={{ display: 'none' }}
+                accept="*.json"
+                // className={classes.input}
+                id="contained-button-file"
+                multiple
+                type="file"
+            />
+            <button> Upload </button>
         </Column>
 
         <Playback animatedPegs={
@@ -91,7 +94,7 @@ export const RecordingPage: React.FC<{}> = () => {
             ))
         } />
 
-        <ButtonsOverlay appendToRecording={appendToRecording} />
+        <ButtonsOverlay appendToRecording={() => { }} />
     </div>
 
 
