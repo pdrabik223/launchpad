@@ -7,6 +7,8 @@ export interface MainGameButtonProps {
     recordPress: () => void
     samplePath: string
     style?: React.CSSProperties
+    positionOffset: [number, number]
+
 }
 
 
@@ -48,6 +50,9 @@ export const MainGameButton: React.FC<MainGameButtonProps> = (props: MainGameBut
                 const baseStyle: React.CSSProperties = {
                     height: `${props.diameter}vw`,
                     width: `${props.diameter}vw`,
+                    left: `${props.positionOffset[1]}vw`,
+                    top: `${props.positionOffset[0]}vh`,
+                    position: 'absolute',
                     backgroundColor: color,
                     borderRadius: "50%",
                     filter: `${isPressed ? 'brightness(0.4)' : 'brightness(1)'}`,
